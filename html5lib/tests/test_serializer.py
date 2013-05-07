@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, unicode_literals
 
+import os
+import warnings
 import unittest
-from .support import get_data_files
+from .support import get_data_files, TestData
 
 try:
     import json
@@ -16,6 +18,7 @@ except AttributeError:
 import html5lib
 from html5lib import serializer, constants
 from html5lib.treewalkers._base import TreeWalker
+from html5lib.constants import DataLossWarning
 
 optionals_loaded = []
 
@@ -100,6 +103,19 @@ def runSerializerTest(input, expected, options):
     elif result not in expected:
         assert False, "Expected: %s, Received: %s" % (expected, result)
 
+def runRoundtripTest(input, options):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tree = html5lib.parse(input)
+        try:
+            serialized = html5lib.serialize(tree)
+        except constants.DataLossWarning:
+            # Amnesty for those who confess
+            return
+        tree2 = html5lib.parse(serialized)
+        serialized2 = html5lib.serialize(tree2)
+        assert serialized == serialized2
+
 
 class EncodingTestCase(unittest.TestCase):
     def throwsWithLatin1(self, input):
@@ -176,3 +192,20 @@ def test_serializer():
             tests = json.load(fp)
             for index, test in enumerate(tests['tests']):
                 yield runSerializerTest, test["input"], test["expected"], test.get("options", {})
+
+def test_roundtrip():
+    files = get_data_files('tree-construction')
+    for filename in files:
+        testName = os.path.basename(filename).replace(".dat", "")
+        if testName in ("template",):
+            continue
+
+        tests = TestData(filename, "data")
+
+        for index, test in enumerate(tests):
+            (input, errors, innerHTML, expected) = [test[key] for key in ("data", "errors",
+                                                                          "document-fragment",
+                                                                          "document")]
+            if innerHTML:
+                continue
+            yield runRoundtripTest, input, {}
