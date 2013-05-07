@@ -23,6 +23,8 @@ packages = ['html5lib'] + ['html5lib.'+name
                            if os.path.isdir(os.path.join('html5lib', name)) and
                            not name.startswith('.') and name != 'tests']
 
+package_data = {'html5lib': ['data/entities.json']}
+
 with codecs.open(os.path.join(os.path.dirname(__file__), 'README.rst'), 'r', 'utf8') as ld_file:
     long_description = ld_file.read()
 
@@ -36,6 +38,7 @@ setup(name='html5lib',
       maintainer='James Graham',
       maintainer_email='james@hoppipolla.co.uk',
       packages=packages,
+      package_data=package_data,
       install_requires=[
           'six',
       ],
