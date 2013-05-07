@@ -34,25 +34,23 @@ class MethodDispatcher(dict):
         return dict.get(self, key, self.default)
 
 
-# Some utility functions to dal with weirdness around UCS2 vs UCS4
-# python builds
-
 def isSurrogatePair(data):
+    """Check whether a string is a surrogate pair or not"""
     return (len(data) == 2 and
             ord(data[0]) >= 0xD800 and ord(data[0]) <= 0xDBFF and
             ord(data[1]) >= 0xDC00 and ord(data[1]) <= 0xDFFF)
 
 
 def surrogatePairToCodepoint(data):
+    """Convert a surrogate pair to a codepoint"""
     char_val = (0x10000 + (ord(data[0]) - 0xD800) * 0x400 +
                 (ord(data[1]) - 0xDC00))
     return char_val
 
-# Module Factory Factory (no, this isn't Java, I know)
-# Here to stop this being duplicated all over the place.
-
 
 def moduleFactoryFactory(factory):
+    """Module Factory Factory (no, this isn't Java, I know)
+    Here to stop this being duplicated all over the place."""
     moduleCache = {}
 
     def moduleFactory(baseModule, *args, **kwargs):
