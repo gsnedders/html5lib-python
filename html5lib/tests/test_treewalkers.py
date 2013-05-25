@@ -261,16 +261,18 @@ class TokenTestCase(unittest.TestCase):
 
 
 def runTreewalkerTest(innerHTML, input, expected, errors, treeClass):
-    warnings.resetwarnings()
-    warnings.simplefilter("error")
-    try:
+    with warnings.catch_warnings(record=True) as caughtWarnings:
+        warnings.simplefilter("always")
         p = html5parser.HTMLParser(tree=treeClass["builder"])
         if innerHTML:
             document = p.parseFragment(input, innerHTML)
         else:
             document = p.parse(input)
-    except constants.DataLossWarning:
-        # Ignore testcases we know we don't pass
+
+    otherWarnings = [x for x in caughtWarnings
+                     if not issubclass(x.category, constants.DataLossWarning)]
+    assert len(otherWarnings) == 0, [(x.category, x.message) for x in otherWarnings]
+    if len(caughtWarnings):
         return
 
     document = treeClass.get("adapter", lambda x: x)(document)

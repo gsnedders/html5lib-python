@@ -140,25 +140,27 @@ def unescape(test):
 
 
 def runTokenizerTest(test):
-    warnings.resetwarnings()
-    warnings.simplefilter("error")
+    with warnings.catch_warnings(record=True) as caughtWarnings:
+        warnings.simplefilter("always")
 
-    expected = concatenateCharacterTokens(test['output'])
-    if 'lastStartTag' not in test:
-        test['lastStartTag'] = None
-    parser = TokenizerTestParser(test['initialState'],
-                                 test['lastStartTag'])
-    tokens = parser.parse(test['input'])
-    tokens = concatenateCharacterTokens(tokens)
-    received = normalizeTokens(tokens)
-    errorMsg = "\n".join(["\n\nInitial state:",
-                          test['initialState'],
-                          "\nInput:", test['input'],
-                          "\nExpected:", repr(expected),
-                          "\nreceived:", repr(tokens)])
-    errorMsg = errorMsg
-    ignoreErrorOrder = test.get('ignoreErrorOrder', False)
-    assert tokensMatch(expected, received, ignoreErrorOrder, True), errorMsg
+        expected = concatenateCharacterTokens(test['output'])
+        if 'lastStartTag' not in test:
+            test['lastStartTag'] = None
+        parser = TokenizerTestParser(test['initialState'],
+                                     test['lastStartTag'])
+        tokens = parser.parse(test['input'])
+        tokens = concatenateCharacterTokens(tokens)
+        received = normalizeTokens(tokens)
+        errorMsg = "\n".join(["\n\nInitial state:",
+                              test['initialState'],
+                              "\nInput:", test['input'],
+                              "\nExpected:", repr(expected),
+                              "\nreceived:", repr(tokens)])
+        errorMsg = errorMsg
+        ignoreErrorOrder = test.get('ignoreErrorOrder', False)
+        assert tokensMatch(expected, received, ignoreErrorOrder, True), errorMsg
+
+    assert len(caughtWarnings) == 0
 
 
 def _doCapitalize(match):
