@@ -3,6 +3,9 @@ from __future__ import absolute_import, division, unicode_literals
 import os
 import warnings
 import unittest
+
+from difflib import unified_diff
+
 from .support import get_data_files, TestData
 
 try:
@@ -16,7 +19,7 @@ except AttributeError:
     unittest.TestCase.assertEqual = unittest.TestCase.assertEquals
 
 import html5lib
-from html5lib import serializer, constants
+from html5lib import html5parser, serializer, constants
 from html5lib.treewalkers._base import TreeWalker
 from html5lib.constants import DataLossWarning
 
@@ -106,15 +109,25 @@ def runSerializerTest(input, expected, options):
 def runRoundtripTest(input, options):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        tree = html5lib.parse(input)
+        p = html5parser.HTMLParser()
+        tree = p.parse(input)
         try:
             serialized = html5lib.serialize(tree)
         except constants.DataLossWarning:
             # Amnesty for those who confess
             return
-        tree2 = html5lib.parse(serialized)
-        serialized2 = html5lib.serialize(tree2)
-        assert serialized == serialized2
+        tree2 = p.parse(serialized)
+        expected = p.tree.testSerializer(tree)
+        output = p.tree.testSerializer(tree2)
+        diff = "".join(unified_diff([line + "\n" for line in expected.splitlines()],
+                                    [line + "\n" for line in output.splitlines()],
+                                    "Expected", "Received"))
+        assert expected == output, "\n".join([
+            "", "Input:", input,
+            "", "Expected:", expected,
+            "", "Received:", output,
+            "", "Diff:", diff
+        ])
 
 
 class EncodingTestCase(unittest.TestCase):
