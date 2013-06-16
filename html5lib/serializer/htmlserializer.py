@@ -268,6 +268,9 @@ class HTMLSerializer(object):
                         yield self.encodeStrict("/")
                 yield self.encode(">")
 
+                if name in ("pre", "textarea"):
+                    yield self.encode("\n")
+
             elif type == "EndTag":
                 name = token["name"]
                 if name in rcdataElements:
