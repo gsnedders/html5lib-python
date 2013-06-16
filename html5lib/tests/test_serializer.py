@@ -125,6 +125,7 @@ def runRoundtripTest(input, options):
         assert expected == output, "\n".join([
             "", "Input:", input,
             "", "Expected:", expected,
+            "", "Serialization:", serialized,
             "", "Received:", output,
             "", "Diff:", diff
         ])
