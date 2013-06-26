@@ -122,7 +122,7 @@ def testSerializer(element):
             if element.text:
                 rv.append("|%s\"%s\"" % (' ' * (indent + 2), element.text))
             indent += 2
-            for child in element.getchildren():
+            for child in element:
                 serializeElement(child, indent)
             if hasattr(element, "tail") and element.tail:
                 rv.append("|%s\"%s\"" % (' ' * (indent - 2), element.tail))
@@ -163,7 +163,7 @@ def tostring(element):
             if element.text:
                 rv.append(element.text)
 
-            for child in element.getchildren():
+            for child in element:
                 serializeElement(child)
 
             rv.append("</%s>" % (element.tag,))
@@ -185,6 +185,7 @@ class TreeBuilder(_base.TreeBuilder):
     elementClass = None
     commentClass = None
     fragmentClass = Document
+    implementation = etree
 
     def __init__(self, namespaceHTMLElements, fullTree=False):
         builder = etree_builders.getETreeModule(etree, fullTree=fullTree)
@@ -280,7 +281,7 @@ class TreeBuilder(_base.TreeBuilder):
         element = self.openElements[0]._element
         if element.text:
             fragment.append(element.text)
-        fragment.extend(element.getchildren())
+        fragment.extend(list(element))
         if element.tail:
             fragment.append(element.tail)
         return fragment
@@ -290,11 +291,16 @@ class TreeBuilder(_base.TreeBuilder):
         publicId = token["publicId"]
         systemId = token["systemId"]
 
-        if not name or ihatexml.nonXmlNameBMPRegexp.search(name) or name[0] == '"':
-            warnings.warn("lxml cannot represent null or non-xml doctype", DataLossWarning)
+        if not name:
+            warnings.warn("lxml cannot represent empty doctype", DataLossWarning)
+            self.doctype = None
+        else:
+            coercedName = self.infosetFilter.coerceElement(name)
+            if coercedName != name:
+                warnings.warn("lxml cannot represent non-xml doctype", DataLossWarning)
 
-        doctype = self.doctypeClass(name, publicId, systemId)
-        self.doctype = doctype
+            doctype = self.doctypeClass(coercedName, publicId, systemId)
+            self.doctype = doctype
 
     def insertCommentInitial(self, data, parent=None):
         self.initial_comments.append(data)
@@ -312,22 +318,29 @@ class TreeBuilder(_base.TreeBuilder):
         # Therefore we need to use the built-in parser to create our iniial
         # tree, after which we can add elements like normal
         docStr = ""
-        if self.doctype and self.doctype.name and not self.doctype.name.startswith('"'):
+        if self.doctype:
+            assert self.doctype.name
             docStr += "<!DOCTYPE %s" % self.doctype.name
             if (self.doctype.publicId is not None or
                     self.doctype.systemId is not None):
-                docStr += ' PUBLIC "%s" "%s"' % (self.doctype.publicId or "",
-                                                 self.doctype.systemId or "")
+                docStr += (' PUBLIC "%s" ' %
+                           (self.infosetFilter.coercePubid(self.doctype.publicId or "")))
+                if self.doctype.systemId:
+                    sysid = self.doctype.systemId
+                    if sysid.find("'") >= 0 and sysid.find('"') >= 0:
+                        warnings.warn("DOCTYPE system cannot contain single and double quotes", DataLossWarning)
+                        sysid = sysid.replace("'", 'U00027')
+                    if sysid.find("'") >= 0:
+                        docStr += '"%s"' % sysid
+                    else:
+                        docStr += "'%s'" % sysid
+                else:
+                    docStr += "''"
             docStr += ">"
             if self.doctype.name != token["name"]:
                 warnings.warn("lxml cannot represent doctype with a different name to the root element", DataLossWarning)
         docStr += "<THIS_SHOULD_NEVER_APPEAR_PUBLICLY/>"
-
-        try:
-            root = etree.fromstring(docStr)
-        except etree.XMLSyntaxError:
-            print(docStr)
-            raise
+        root = etree.fromstring(docStr)
 
         # Append the initial comments:
         for comment_token in self.initial_comments:

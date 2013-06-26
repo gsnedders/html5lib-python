@@ -8,7 +8,6 @@ from . import tokenizer
 
 from . import treebuilders
 from .treebuilders._base import Marker
-from .treebuilders import simpletree
 
 from . import utils
 from . import constants
@@ -18,9 +17,10 @@ from .constants import headingElements
 from .constants import cdataElements, rcdataElements
 from .constants import tokenTypes, ReparseException, namespaces
 from .constants import htmlIntegrationPointElements, mathmlTextIntegrationPointElements
+from .constants import adjustForeignAttributes as adjustForeignAttributesMap
 
 
-def parse(doc, treebuilder="simpletree", encoding=None,
+def parse(doc, treebuilder="etree", encoding=None,
           namespaceHTMLElements=True):
     """Parse a string or file-like object into a tree"""
     tb = treebuilders.getTreeBuilder(treebuilder)
@@ -28,7 +28,7 @@ def parse(doc, treebuilder="simpletree", encoding=None,
     return p.parse(doc, encoding=encoding)
 
 
-def parseFragment(doc, container="div", treebuilder="simpletree", encoding=None,
+def parseFragment(doc, container="div", treebuilder="etree", encoding=None,
                   namespaceHTMLElements=True):
     tb = treebuilders.getTreeBuilder(treebuilder)
     p = HTMLParser(tb, namespaceHTMLElements=namespaceHTMLElements)
@@ -51,9 +51,8 @@ class HTMLParser(object):
     """HTML parser. Generates a tree structure from a stream of (possibly
         malformed) HTML"""
 
-    def __init__(self, tree=simpletree.TreeBuilder,
-                 tokenizer=tokenizer.HTMLTokenizer, strict=False,
-                 namespaceHTMLElements=True, debug=False):
+    def __init__(self, tree=None, tokenizer=tokenizer.HTMLTokenizer,
+                 strict=False, namespaceHTMLElements=True, debug=False):
         """
         strict - raise an exception when a parse error is encountered
 
@@ -69,6 +68,8 @@ class HTMLParser(object):
         # Raise an exception on the first error encountered
         self.strict = strict
 
+        if tree is None:
+            tree = treebuilders.getTreeBuilder("etree")
         self.tree = tree(namespaceHTMLElements)
         self.tokenizer_class = tokenizer
         self.errors = []
@@ -333,20 +334,7 @@ class HTMLParser(object):
                 del token["data"][originalName]
 
     def adjustForeignAttributes(self, token):
-        replacements = {
-            "xlink:actuate": ("xlink", "actuate", namespaces["xlink"]),
-            "xlink:arcrole": ("xlink", "arcrole", namespaces["xlink"]),
-            "xlink:href": ("xlink", "href", namespaces["xlink"]),
-            "xlink:role": ("xlink", "role", namespaces["xlink"]),
-            "xlink:show": ("xlink", "show", namespaces["xlink"]),
-            "xlink:title": ("xlink", "title", namespaces["xlink"]),
-            "xlink:type": ("xlink", "type", namespaces["xlink"]),
-            "xml:base": ("xml", "base", namespaces["xml"]),
-            "xml:lang": ("xml", "lang", namespaces["xml"]),
-            "xml:space": ("xml", "space", namespaces["xml"]),
-            "xmlns": (None, "xmlns", namespaces["xmlns"]),
-            "xmlns:xlink": ("xmlns", "xlink", namespaces["xmlns"])
-        }
+        replacements = adjustForeignAttributesMap
 
         for originalName in token["data"].keys():
             if originalName in replacements:

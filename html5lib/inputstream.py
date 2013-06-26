@@ -3,7 +3,6 @@ from six import text_type
 
 import codecs
 import re
-import sys
 
 from .constants import EOF, spaceCharacters, asciiLetters, asciiUppercase
 from .constants import encodings, ReparseException
@@ -44,7 +43,7 @@ ascii_punctuation_re = re.compile("[\u0009-\u000D\u0020-\u002F\u003A-\u0040\u005
 charsUntilRegEx = {}
 
 
-class BufferedStream:
+class BufferedStream(object):
     """Buffering for streams that do not have buffering of their own
 
     The buffer is implemented as a list of chunks on the assumption that
@@ -133,7 +132,7 @@ def HTMLInputStream(source, encoding=None, parseMeta=True, chardet=True):
         return HTMLBinaryInputStream(source, encoding, parseMeta, chardet)
 
 
-class HTMLUnicodeInputStream:
+class HTMLUnicodeInputStream(object):
     """Provides a unicode stream of characters to the HTMLTokenizer.
 
     This class takes care of character encoding and removing or replacing
@@ -201,12 +200,6 @@ class HTMLUnicodeInputStream:
             stream = source
         else:
             stream = StringIO(source)
-
-        if (  # not isinstance(stream, BufferedIOBase) and
-            not(hasattr(stream, "tell") and
-                hasattr(stream, "seek")) or
-                stream is sys.stdin):
-            stream = BufferedStream(stream)
 
         return stream
 
@@ -437,8 +430,9 @@ class HTMLBinaryInputStream(HTMLUnicodeInputStream):
         else:
             stream = BytesIO(source)
 
-        if (not(hasattr(stream, "tell") and hasattr(stream, "seek")) or
-                stream is sys.stdin):
+        try:
+            stream.seek(stream.tell())
+        except:
             stream = BufferedStream(stream)
 
         return stream
