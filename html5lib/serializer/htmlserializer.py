@@ -11,6 +11,7 @@ except ImportError:
 
 from ..constants import voidElements, booleanAttributes, spaceCharacters
 from ..constants import rcdataElements, entities, xmlEntities
+from ..constants import unadjustForeignAttributes
 from .. import utils
 from xml.sax.saxutils import escape
 
@@ -233,8 +234,14 @@ class HTMLSerializer(object):
                 elif in_cdata:
                     self.serializeError(_("Unexpected child element of a CDATA element"))
                 for (attr_namespace, attr_name), attr_value in token["data"].items():
-                    # TODO: Add namespace support here
-                    k = attr_name
+                    if (attr_namespace, attr_name) in unadjustForeignAttributes:
+                        k = unadjustForeignAttributes[(attr_namespace, attr_name)]
+                    elif attr_namespace is not None:
+                        self.serializeError(_("Cannot serialize attribute in %s namespace" % attr_namespace))
+                        continue
+                    else:
+                        k = attr_name
+
                     v = attr_value
                     yield self.encodeStrict(' ')
 
