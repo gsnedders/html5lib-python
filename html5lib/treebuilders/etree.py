@@ -264,13 +264,14 @@ def getETreeBuilder(ElementTreeImplementation, fullTree=False):
                 element = element.getroot()
 
             if element.tag == "<!DOCTYPE>":
+                name = element.text
                 if element.get("publicId") or element.get("systemId"):
                     publicId = element.get("publicId") or ""
                     systemId = element.get("systemId") or ""
                     rv.append("""<!DOCTYPE %s PUBLIC "%s" "%s">""" %
-                              (element.text, publicId, systemId))
+                              (name, publicId, systemId))
                 else:
-                    rv.append("<!DOCTYPE %s>" % (element.text,))
+                    rv.append("<!DOCTYPE %s>" % (name,))
             elif element.tag == "DOCUMENT_ROOT":
                 if element.text is not None:
                     rv.append(element.text)
