@@ -161,7 +161,8 @@ def getETreeBuilder(ElementTreeImplementation, fullTree=False):
     class DocumentType(Element):
         def __init__(self, name, publicId, systemId):
             Element.__init__(self, "<!DOCTYPE>")
-            self._element.text = name
+            assert name is None or len(name) > 0
+            self._element.text = name if name else ""
             self.publicId = publicId
             self.systemId = systemId
 

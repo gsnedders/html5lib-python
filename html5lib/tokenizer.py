@@ -1134,7 +1134,7 @@ class HTMLTokenizer(object):
                     break
             if matched:
                 self.currentToken = {"type": tokenTypes["Doctype"],
-                                     "name": "",
+                                     "name": None,
                                      "publicId": None, "systemId": None,
                                      "correct": True}
                 self.state = self.doctypeState
