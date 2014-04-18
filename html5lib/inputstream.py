@@ -306,7 +306,7 @@ class HTMLUnicodeInputStream(object):
                 skip = False
                 self.errors.append("invalid-codepoint")
 
-    def charsUntil(self, characters, opposite=False):
+    def charsUntilRe(self, characters, opposite=False):
         """ Returns a string of characters from the stream up to but not
         including any character in 'characters' or EOF. 'characters' must be
         a container that supports the 'in' method and iteration over its
@@ -351,6 +351,43 @@ class HTMLUnicodeInputStream(object):
                 break
 
         r = "".join(rv)
+        return r
+
+    def charsUntilNoRe(self, characters, opposite=False):
+        """Identical to charsUntil, but doesn't use re"""
+        chars = frozenset(characters)
+
+        if self.chunkOffset >= self.chunkSize:
+            if not self.readChunk():
+                return ""
+
+        matching = []
+        while True:
+            end = self.chunkOffset
+            if opposite:
+                for i in range(self.chunkOffset, self.chunkSize):
+                    if self.chunk[i] in chars:
+                        end = i + 1
+                    else:
+                        break
+            else:
+                for i in range(self.chunkOffset, self.chunkSize):
+                    if self.chunk[i] not in chars:
+                        end = i + 1
+                    else:
+                        break
+
+            matching.append(self.chunk[self.chunkOffset:end])
+            self.chunkOffset = end
+
+            if self.chunkOffset >= self.chunkSize:
+                if not self.readChunk():
+                    break
+            else:
+                break
+
+        r = "".join(matching)
+        assert r is not None
         return r
 
     def unget(self, char):
