@@ -88,7 +88,7 @@ class JsonWalker(TreeWalker):
 def serialize_html(input, options):
     options = dict([(str(k), v) for k, v in options.items()])
     stream = JsonWalker(input)
-    serializer = HTMLSerializer(alphabetical_attributes=True, **options)
+    serializer = HTMLSerializer(alphabetical_attributes=True, omit_optional_tags=True, **options)
     return serializer.render(stream, options.get("encoding", None))
 
 
