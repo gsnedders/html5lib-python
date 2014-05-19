@@ -82,7 +82,7 @@ class HTMLSerializer(object):
     use_best_quote_char = True
 
     # tag syntax options
-    omit_optional_tags = True
+    omit_optional_tags = False
     minimize_boolean_attributes = True
     use_trailing_solidus = False
     space_before_trailing_solidus = True
