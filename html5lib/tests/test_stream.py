@@ -3,8 +3,73 @@ from __future__ import absolute_import, division, unicode_literals
 from . import support  # flake8: noqa
 import unittest
 import codecs
+from io import BytesIO
 
-from html5lib.inputstream import HTMLInputStream, HTMLUnicodeInputStream, HTMLBinaryInputStream
+from six.moves import http_client
+
+from html5lib.inputstream import (BufferedStream, HTMLInputStream,
+                                  HTMLUnicodeInputStream, HTMLBinaryInputStream)
+
+class BufferedStreamTest(unittest.TestCase):
+    def test_basic(self):
+        s = b"abc"
+        fp = BufferedStream(BytesIO(s))
+        read = fp.read(10)
+        assert read == s
+
+    def test_read_length(self):
+        fp = BufferedStream(BytesIO(b"abcdef"))
+        read1 = fp.read(1)
+        assert read1 == b"a"
+        read2 = fp.read(2)
+        assert read2 == b"bc"
+        read3 = fp.read(3)
+        assert read3 == b"def"
+        read4 = fp.read(4)
+        assert read4 == b""
+
+    def test_tell(self):
+        fp = BufferedStream(BytesIO(b"abcdef"))
+        read1 = fp.read(1)
+        assert fp.tell() == 1
+        read2 = fp.read(2)
+        assert fp.tell() == 3
+        read3 = fp.read(3)
+        assert fp.tell() == 6
+        read4 = fp.read(4)
+        assert fp.tell() == 6
+
+    def test_seek(self):
+        fp = BufferedStream(BytesIO(b"abcdef"))
+        read1 = fp.read(1)
+        assert read1 == b"a"
+        fp.seek(0)
+        read2 = fp.read(1)
+        assert read2 == b"a"
+        read3 = fp.read(2)
+        assert read3 == b"bc"
+        fp.seek(2)
+        read4 = fp.read(2)
+        assert read4 == b"cd"
+        fp.seek(4)
+        read5 = fp.read(2)
+        assert read5 == b"ef"
+
+    def test_seek_tell(self):
+        fp = BufferedStream(BytesIO(b"abcdef"))
+        read1 = fp.read(1)
+        assert fp.tell() == 1
+        fp.seek(0)
+        read2 = fp.read(1)
+        assert fp.tell() == 1
+        read3 = fp.read(2)
+        assert fp.tell() == 3
+        fp.seek(2)
+        read4 = fp.read(2)
+        assert fp.tell() == 4
+        fp.seek(4)
+        read5 = fp.read(2)
+        assert fp.tell() == 6
 
 
 class HTMLUnicodeInputStreamShortChunk(HTMLUnicodeInputStream):
@@ -90,6 +155,20 @@ class HTMLInputStreamTest(unittest.TestCase):
         self.assertEqual(stream.position(), (2, 0))
         self.assertEqual(stream.char(), "d")
         self.assertEqual(stream.position(), (2, 1))
+
+    def test_python_issue_20007(self):
+        """
+        Make sure we have a work-around for Python bug #20007
+        http://bugs.python.org/issue20007
+        """
+        class FakeSocket(object):
+            def makefile(self, _mode, _bufsize=None):
+                return BytesIO(b"HTTP/1.1 200 Ok\r\n\r\nText")
+
+        source = http_client.HTTPResponse(FakeSocket())
+        source.begin()
+        stream = HTMLInputStream(source)
+        self.assertEqual(stream.charsUntil(" "), "Text")
 
 
 def buildTestSuite():

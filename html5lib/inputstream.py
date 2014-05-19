@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, unicode_literals
 from six import text_type
+from six.moves import http_client
 
 import codecs
 import re
@@ -63,11 +64,11 @@ class BufferedStream(object):
         return pos
 
     def seek(self, pos):
-        assert pos < self._bufferedBytes()
+        assert pos <= self._bufferedBytes()
         offset = pos
         i = 0
         while len(self.buffer[i]) < offset:
-            offset -= pos
+            offset -= len(self.buffer[i])
             i += 1
         self.position = [i, offset]
 
@@ -114,11 +115,15 @@ class BufferedStream(object):
         if remainingBytes:
             rv.append(self._readStream(remainingBytes))
 
-        return "".join(rv)
+        return b"".join(rv)
 
 
 def HTMLInputStream(source, encoding=None, parseMeta=True, chardet=True):
-    if hasattr(source, "read"):
+    if isinstance(source, http_client.HTTPResponse):
+        # Work around Python bug #20007: read(0) closes the connection.
+        # http://bugs.python.org/issue20007
+        isUnicode = False
+    elif hasattr(source, "read"):
         isUnicode = isinstance(source.read(0), text_type)
     else:
         isUnicode = isinstance(source, text_type)

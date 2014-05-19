@@ -1,14 +1,69 @@
 Change Log
 ----------
 
+0.9999
+~~~~~~
+
+Released on XXX, 2014
+
+* XXX
+
+
+0.999
+~~~~~
+
+Released on December 23, 2013
+
+* Fix #127: add work-around for CPython issue #20007: .read(0) on
+  http.client.HTTPResponse drops the rest of the content.
+
+* Fix #115: lxml treewalker can now deal with fragments containing, at
+  their root level, text nodes with non-ASCII characters on Python 2.
+
+
+0.99
+~~~~
+
+Released on September 10, 2013
+
+* No library changes from 1.0b3; released as 0.99 as pip has changed
+  behaviour from 1.4 to avoid installing pre-release versions per
+  PEP 440.
+
+
+1.0b3
+~~~~~
+
+Released on July 24, 2013
+
+* Removed ``RecursiveTreeWalker`` from ``treewalkers._base``. Any
+  implementation using it should be moved to
+  ``NonRecursiveTreeWalker``, as everything bundled with html5lib has
+  for years.
+
+* Fix #67 so that ``BufferedStream`` to correctly returns a bytes
+  object, thereby fixing any case where html5lib is passed a
+  non-seekable RawIOBase-like object.
+
+
 1.0b2
 ~~~~~
 
-Released on XXX, 2013
+Released on June 27, 2013
+
+* Removed reordering of attributes within the serializer. There is now
+  an ``alphabetical_attributes`` option which preserves the previous
+  behaviour through a new filter. This allows attribute order to be
+  preserved through html5lib if the tree builder preserves order.
 
 * Removed ``dom2sax`` from DOM treebuilders. It has been replaced by
   ``treeadapters.sax.to_sax`` which is generic and supports any
   treewalker; it also resolves all known bugs with ``dom2sax``.
+
+* Fix treewalker assertions on hitting bytes strings on
+  Python 2. Previous to 1.0b1, treewalkers coped with mixed
+  bytes/unicode data on Python 2; this reintroduces this prior
+  behaviour on Python 2. Behaviour is unchanged on Python 3.
 
 
 1.0b1
