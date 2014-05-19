@@ -109,13 +109,17 @@ def runSerializerTest(input, expected, options):
 def runRoundtripTest(input, options):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        p = html5parser.HTMLParser()
-        tree = p.parse(input)
+        p = html5parser.HTMLParser(strict=True)
+        try:
+            tree = p.parse(input)
+        except html5parser.ParseError:
+            return
         try:
             serialized = html5lib.serialize(tree)
         except DataLossWarning:
             # Amnesty for those who confess
             return
+        p = html5parser.HTMLParser()
         tree2 = p.parse(serialized)
         expected = p.tree.testSerializer(tree)
         output = p.tree.testSerializer(tree2)
