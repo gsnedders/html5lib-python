@@ -10,6 +10,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as default_etree
 
+from .constants import asciiUpper2Lower
 
 __all__ = ["default_etree", "MethodDispatcher", "isSurrogatePair",
            "surrogatePairToCodepoint", "moduleFactoryFactory",
@@ -125,3 +126,7 @@ def memoize(func):
         return cache[key]
 
     return wrapped
+
+
+def ascii_lowercase(s):
+    return s.translate(asciiUpper2Lower)

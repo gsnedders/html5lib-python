@@ -16,7 +16,7 @@ from .treebuilders._base import Marker
 
 from . import utils
 from .constants import (
-    spaceCharacters, asciiUpper2Lower,
+    spaceCharacters,
     specialElements, headingElements, cdataElements, rcdataElements,
     tokenTypes, tagTokenTypes,
     namespaces,
@@ -152,8 +152,7 @@ class HTMLParser(object):
         if (element.name == "annotation-xml" and
                 element.namespace == namespaces["mathml"]):
             return ("encoding" in element.attributes and
-                    element.attributes["encoding"].translate(
-                        asciiUpper2Lower) in
+                    utils.ascii_lowercase(element.attributes["encoding"]) in
                     ("text/html", "application/xhtml+xml"))
         else:
             return (element.namespace, element.name) in htmlIntegrationPointElements
@@ -456,7 +455,7 @@ def getPhases(debug):
             self.tree.insertDoctype(token)
 
             if publicId != "":
-                publicId = publicId.translate(asciiUpper2Lower)
+                publicId = utils.ascii_lowercase(publicId)
 
             if (not correct or token["name"] != "html" or
                     publicId.startswith(
@@ -1167,7 +1166,7 @@ def getPhases(debug):
             framesetOK = self.parser.framesetOK
             self.startTagVoidFormatting(token)
             if ("type" in token["data"] and
-                    token["data"]["type"].translate(asciiUpper2Lower) == "hidden"):
+                    utils.ascii_lowercase(token["data"]["type"]) == "hidden"):
                 # input type=hidden doesn't change framesetOK
                 self.parser.framesetOK = framesetOK
 
@@ -1729,7 +1728,7 @@ def getPhases(debug):
 
         def startTagInput(self, token):
             if ("type" in token["data"] and
-                    token["data"]["type"].translate(asciiUpper2Lower) == "hidden"):
+                    utils.ascii_lowercase(token["data"]["type"]) == "hidden"):
                 self.parser.parseError("unexpected-hidden-input-in-table")
                 self.tree.insertElement(token)
                 # XXX associate with form
@@ -2452,11 +2451,11 @@ def getPhases(debug):
         def processEndTag(self, token):
             nodeIndex = len(self.tree.openElements) - 1
             node = self.tree.openElements[-1]
-            if node.name.translate(asciiUpper2Lower) != token["name"]:
+            if utils.ascii_lowercase(node.name) != token["name"]:
                 self.parser.parseError("unexpected-end-tag", {"name": token["name"]})
 
             while True:
-                if node.name.translate(asciiUpper2Lower) == token["name"]:
+                if utils.ascii_lowercase(node.name) == token["name"]:
                     # XXX this isn't in the spec but it seems necessary
                     if self.parser.phase == self.parser.phases["inTableText"]:
                         self.parser.phase.flushCharacters()
