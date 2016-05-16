@@ -1,6 +1,8 @@
 from __future__ import absolute_import, division, unicode_literals
 
+import re
 import sys
+
 from types import ModuleType
 
 from six import text_type
@@ -128,5 +130,11 @@ def memoize(func):
     return wrapped
 
 
+_upper = re.compile(u"[A-Z]")
+
+
 def ascii_lowercase(s):
-    return s.translate(asciiUpper2Lower)
+    if _upper.search(s) is not None:
+        return s.translate(asciiUpper2Lower)
+    else:
+        return s
