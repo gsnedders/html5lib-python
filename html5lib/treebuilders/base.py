@@ -28,15 +28,12 @@ class Node(object):
         value - The value of the current node (applies to text nodes and
         comments
         attributes - a dict holding name, value pairs for attributes of the node
-        childNodes - a list of child nodes of the current node. This must
-        include all elements but not necessarily other node types
         _flags - A list of miscellaneous flags that can be set on the node
         """
         self.name = name
         self.parent = None
         self.value = None
         self.attributes = {}
-        self.childNodes = []
         self._flags = []
 
     def __str__(self):
@@ -78,10 +75,7 @@ class Node(object):
         This is needed so that trees that don't store text as nodes move the
         text in the correct way
         """
-        # XXX - should this method be made more general?
-        for child in self.childNodes:
-            newParent.appendChild(child)
-        self.childNodes = []
+        raise NotImplementedError
 
     def cloneNode(self):
         """Return a shallow copy of the current node i.e. a node with the same

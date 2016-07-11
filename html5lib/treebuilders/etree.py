@@ -142,7 +142,9 @@ def getETreeBuilder(ElementTreeImplementation, fullTree=False):
                 if self._element.text is not None:
                     newParent._element.text += self._element.text
             self._element.text = ""
-            base.Node.reparentChildren(self, newParent)
+            for child in self.childNodes:
+                newParent.appendChild(child)
+            self.childNodes = []
 
     class Comment(Element):
         def __init__(self, data):
