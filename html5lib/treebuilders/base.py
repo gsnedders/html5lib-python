@@ -28,13 +28,11 @@ class Node(object):
         value - The value of the current node (applies to text nodes and
         comments
         attributes - a dict holding name, value pairs for attributes of the node
-        _flags - A list of miscellaneous flags that can be set on the node
         """
         self.name = name
         self.parent = None
         self.value = None
         self.attributes = {}
-        self._flags = []
 
     def __str__(self):
         attributesStr = " ".join(["%s=\"%s\"" % (name, value)
