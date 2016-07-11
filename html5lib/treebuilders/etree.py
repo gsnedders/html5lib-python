@@ -74,17 +74,6 @@ def getETreeBuilder(ElementTreeImplementation, fullTree=False):
 
         attributes = property(_getAttributes, _setAttributes)
 
-        def _getChildNodes(self):
-            return self._childNodes
-
-        def _setChildNodes(self, value):
-            del self._element[:]
-            self._childNodes = []
-            for element in value:
-                self.insertChild(element)
-
-        childNodes = property(_getChildNodes, _setChildNodes)
-
         def hasContent(self):
             """Return true if the node has children or text"""
             return bool(self._element.text or len(self._element))
@@ -95,6 +84,7 @@ def getETreeBuilder(ElementTreeImplementation, fullTree=False):
             node.parent = self
 
         def insertBefore(self, node, refNode):
+            self._childNodes.append(node)
             index = list(self._element).index(refNode._element)
             self._element.insert(index, node._element)
             node.parent = self
@@ -134,17 +124,18 @@ def getETreeBuilder(ElementTreeImplementation, fullTree=False):
             return element
 
         def reparentChildren(self, newParent):
-            if newParent.childNodes:
-                newParent.childNodes[-1]._element.tail += self._element.text
+            if newParent._childNodes:
+                newParent._childNodes[-1]._element.tail += self._element.text
             else:
                 if not newParent._element.text:
                     newParent._element.text = ""
                 if self._element.text is not None:
                     newParent._element.text += self._element.text
             self._element.text = ""
-            for child in self.childNodes:
+            for child in self._childNodes:
                 newParent.appendChild(child)
-            self.childNodes = []
+            del self._element[:]
+            self._childNodes = []
 
     class Comment(Element):
         def __init__(self, data):
